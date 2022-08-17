@@ -1,5 +1,7 @@
 import { PropsWithChildren, useEffect, useReducer } from 'react';
-import { v4 as uuidv4 } from 'uuid'
+
+import { useSnackbar } from 'notistack';
+
 import { entriesApi } from '../../apis';
 import { Entry } from '../../interfaces';
 
@@ -17,25 +19,67 @@ const Entries_INITIAL_STATE: EntriesState = {
 export const  EntriesProvider = ({children}: PropsWithChildren) => {
 
     const [state, dispatch] = useReducer(entriesReducer, Entries_INITIAL_STATE)
+    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         refreshEntries()
     }, [])
     
 
-    const addNewEntry = (description: string) => {
-        const newEntry: Entry = {
-            _id: uuidv4(),
-            description,
-            createdAt: Date.now(),
-            status: 'pending'
-        }
+    const addNewEntry =async (description: string) => {
+        const {data} = await entriesApi.post<Entry>('/entries', { description});
+        // const newEntry: Entry = {
+        //     _id: uuidv4(),
+        //     description,
+        //     createdAt: Date.now(),
+        //     status: 'pending'
+        // }
 
-        dispatch({type: '[Entry] Add-Entry', payload: newEntry})
+        dispatch({type: '[Entry] Add-Entry', payload: data})
     }
 
-    const updateEntry = (entry: Entry) => {
-        dispatch({type: '[Entry] Entry-Updated', payload: entry});
+    const updateEntry =async ({_id, description, status}: Entry, showSnackbar = false) => {
+        try {
+
+            const {data} = await entriesApi.put<Entry>(`/entries/${_id}`, {description, status})
+
+            dispatch({type: '[Entry] Entry-Updated', payload: data});
+            if(showSnackbar){
+                enqueueSnackbar('Entrada actualiazada',{
+                    variant: 'success',
+                    autoHideDuration: 1500,
+                    anchorOrigin: {
+                        vertical: 'top',
+                        horizontal: 'right'
+                    }
+                })
+            }
+            
+        } catch (error) {
+            console.log({error});
+        }
+    }
+    
+    const deleteEntry = async ({_id}: Entry, showSnackbar = false) => {
+        try {
+            const {data} = await entriesApi.delete<Entry>(`/entries/${_id}`)
+            dispatch({
+                type: '[Entry] Entry-Deleted',
+                payload: data
+            })
+            if(showSnackbar){
+                enqueueSnackbar('Entrada actualiazada',{
+                    variant: 'success',
+                    autoHideDuration: 1500,
+                    anchorOrigin: {
+                        vertical: 'top',
+                        horizontal: 'right'
+                    }
+                })
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     
@@ -50,7 +94,8 @@ export const  EntriesProvider = ({children}: PropsWithChildren) => {
 
             //Methods
             addNewEntry,
-            updateEntry
+            updateEntry,
+            deleteEntry
         }}
     >
         {children}

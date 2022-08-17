@@ -7,17 +7,21 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import { lightTheme, darkTheme } from '../themes';
 import '../styles/globals.css';
 
+import { SnackbarProvider } from 'notistack';
+
 
 function MyApp({ Component, pageProps }: AppProps) {
   return(
-    <EntriesProvider>
-      <UIProvider>
-      <ThemeProvider theme={darkTheme}>
-        <CssBaseline />
-        <Component {...pageProps} />
-      </ThemeProvider>
-      </UIProvider>
-    </EntriesProvider>
+    <SnackbarProvider maxSnack={3}>
+      <EntriesProvider>
+        <UIProvider>
+        <ThemeProvider theme={darkTheme}>
+          <CssBaseline />
+          <Component {...pageProps} />
+        </ThemeProvider>
+        </UIProvider>
+      </EntriesProvider>
+    </SnackbarProvider>
   )
 }
 
